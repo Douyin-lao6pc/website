@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>感谢信 - 黄少敏老师</title>
+    <style>
+        /* ===== 全局重置 & 基础 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: #0a0a1a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ===== Canvas 底层（烟花 + 粒子） ===== */
+        #fxCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== 所有内容容器 ===== */
+        #app {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+        #app>* {
+            pointer-events: auto;
+        }
+
+        /* ===== 密码弹窗 ===== */
+        #passwordModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        #passwordModal.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .password-box {
+            background: linear-gradient(145deg, #1e2a3a, #0f1a2a);
+            padding: 48px 56px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: modalIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes modalIn {
+            0% {
+                transform: scale(0.8) translateY(30px);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .password-box .lock-icon {
+            font-size: 52px;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .password-box h2 {
+            color: #e8edf5;
+            font-weight: 300;
+            font-size: 22px;
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+        }
+        .password-box p {
+            color: #8a9bb5;
+            font-size: 14px;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+        }
+        .password-box input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.04);
+            color: #e8edf5;
+            font-size: 18px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            letter-spacing: 6px;
+        }
+        .password-box input:focus {
+            border-color: rgba(100, 180, 255, 0.4);
+            box-shadow: 0 0 30px rgba(100, 180, 255, 0.06);
+        }
+        .password-box input::placeholder {
+            color: #4a5a72;
+            letter-spacing: 2px;
+            font-size: 14px;
+        }
+        .password-box .btn-submit {
+            margin-top: 20px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #4a7cf7, #6c5ce7);
+            color: #fff;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s;
+            letter-spacing: 2px;
+        }
+        .password-box .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(74, 124, 247, 0.35);
+        }
+        .password-box .btn-submit:active {
+            transform: scale(0.97);
+        }
+        .password-box .error-msg {
+            color: #ff6b6b;
+            font-size: 13px;
+            margin-top: 12px;
+            height: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .password-box .error-msg.show {
+            opacity: 1;
+        }
+
+        /* ===== Win7 Aero 窗口 ===== */
+        #win7Window {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.92);
+            width: 520px;
+            max-width: 92vw;
+            background: rgba(240, 245, 250, 0.55);
+            backdrop-filter: blur(24px) saturate(1.2);
+            -webkit-backdrop-filter: blur(24px) saturate(1.2);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            z-index: 900;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.5s;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        #win7Window.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        .win7-titlebar {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px 8px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: default;
+        }
+        .win7-titlebar .win-icon {
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #4a7cf7, #6c5ce7);
+            border-radius: 4px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .win7-titlebar .win-title {
+            flex: 1;
+            color: #1a1a2e;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        .win7-titlebar .win-controls {
+            display: flex;
+            gap: 6px;
+        }
+        .win7-titlebar .win-controls span {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            transition: filter 0.2s;
+        }
+        .win7-titlebar .win-controls .c-close {
+            background: #e74c3c;
+        }
+        .win7-titlebar .win-controls .c-min {
+            background: #f1c40f;
+        }
+        .win7-titlebar .win-controls .c-max {
+            background: #2ecc71;
+        }
+
+        .win7-body {
+            padding: 40px 36px 36px;
+            text-align: center;
+        }
+        .win7-body .error-icon {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #ff6b6b, #c0392b);
+            box-shadow: 0 8px 32px rgba(192, 57, 43, 0.4);
+            position: relative;
+            margin-bottom: 16px;
+        }
+        .win7-body .error-icon::before,
+        .win7-body .error-icon::after {
+            content: '';
+            position: absolute;
+            background: #fff;
+            border-radius: 4px;
+        }
+        .win7-body .error-icon::before {
+            width: 44px;
+            height: 6px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+        .win7-body .error-icon::after {
+            width: 44px;
+            height: 6px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+        .win7-body h3 {
+            color: #1a1a2e;
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+        .win7-body p {
+            color: #3d4a5c;
+            font-size: 16px;
+            opacity: 0.8;
+            margin-bottom: 28px;
+        }
+        .win7-body .btn-win7 {
+            padding: 10px 48px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            background: linear-gradient(to bottom, #f0f4fa, #d5dce6);
+            color: #1a1a2e;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            letter-spacing: 1px;
+        }
+        .win7-body .btn-win7:hover {
+            background: linear-gradient(to bottom, #f5f9ff, #dce4f0);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+        .win7-body .btn-win7:active {
+            transform: scale(0.96);
+            background: linear-gradient(to bottom, #d5dce6, #c0c8d4);
+        }
+
+        /* ===== 自定义 Alert ===== */
+        #customAlert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(6px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 950;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #customAlert.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .alert-box {
+            background: #1e2a3a;
+            padding: 36px 44px 32px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+            text-align: center;
+            max-width: 380px;
+            width: 90%;
+            animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .alert-box .alert-icon {
+            font-size: 48px;
+            margin-bottom: 6px;
+        }
+        .alert-box h3 {
+            color: #e8edf5;
+            font-size: 26px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+        .alert-box .btn-alert {
+            margin-top: 20px;
+            padding: 10px 44px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4a7cf7, #6c5ce7);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s;
+            letter-spacing: 1px;
+        }
+        .alert-box .btn-alert:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(74, 124, 247, 0.3);
+        }
+
+        /* ===== 主内容区（动画 + 信封 + CTA） ===== */
+        #mainContent {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            padding: 20px;
+        }
+        #mainContent.show {
+            opacity: 1;
+        }
+        #mainContent>* {
+            pointer-events: auto;
+        }
+
+        /* ---- 动画文字区域 ---- */
+        #animArea {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.6s ease;
+            pointer-events: none;
+            flex-wrap: wrap;
+        }
+        #animArea .hello-text {
+            font-size: 0px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 40px rgba(74, 124, 247, 0.3), 0 0 80px rgba(108, 92, 231, 0.2);
+            transition: opacity 0.8s ease, font-size 0.1s;
+            letter-spacing: 4px;
+        }
+        #animArea .hello-text.fade-out {
+            opacity: 0;
+        }
+        #animArea .teacher-name-big {
+            font-size: 0px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 40px rgba(74, 124, 247, 0.3), 0 0 80px rgba(108, 92, 231, 0.2);
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            letter-spacing: 4px;
+        }
+        #animArea .teacher-name-big.moved {
+            font-size: 32px !important;
+            color: #f0e6a0;
+            text-shadow: 0 0 30px rgba(240, 230, 160, 0.3);
+            transform: translateY(0);
+            letter-spacing: 2px;
+        }
+
+        /* ---- 信封 ---- */
+        #envelopeWrap {
+            position: relative;
+            margin-top: 30px;
+            opacity: 0;
+            transform: translateY(40px) scale(0.92);
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+            width: 720px;
+            max-width: 92vw;
+        }
+        #envelopeWrap.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .envelope {
+            background: linear-gradient(145deg, #f7f0e0, #e8dcc8);
+            border-radius: 20px 20px 16px 16px;
+            padding: 36px 44px 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            min-height: 300px;
+            transition: all 0.3s;
+        }
+        .envelope::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 20px;
+            right: 20px;
+            height: 12px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), transparent);
+            border-radius: 50%;
+            filter: blur(4px);
+        }
+        .envelope .envelope-flap {
+            position: absolute;
+            top: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 28px;
+            background: linear-gradient(to bottom, #f7f0e0, #e8dcc8);
+            clip-path: polygon(0 0, 50% 100%, 100% 0);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+        }
+
+        /* ---- 感谢信内容 ---- */
+        #letterContent {
+            position: relative;
+            z-index: 2;
+            color: #2d2418;
+            font-family: '楷体', 'KaiTi', 'STKaiti', serif;
+            line-height: 1.9;
+            min-height: 220px;
+        }
+        #letterContent .letter-title {
+            font-size: 32px;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 12px;
+            color: #3d2a1a;
+            margin-bottom: 12px;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+        }
+        #letterContent .letter-salute {
+            font-size: 20px;
+            font-weight: 600;
+            color: #3d2a1a;
+            margin-bottom: 10px;
+        }
+        #letterContent .letter-salute .name-in-letter {
+            color: #c0392b;
+            font-weight: 700;
+        }
+        #letterContent .letter-body {
+            font-size: 18px;
+            color: #3d2a1a;
+            min-height: 120px;
+            padding: 4px 0;
+            letter-spacing: 1px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        #letterContent .letter-body .cursor-blink {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background: #3d2a1a;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blink 0.7s infinite;
+        }
+        @keyframes blink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+        }
+        #letterContent .letter-signature {
+            text-align: right;
+            font-size: 17px;
+            color: #5a4a3a;
+            margin-top: 16px;
+            font-weight: 500;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            letter-spacing: 1px;
+        }
+        #letterContent .letter-signature .highlight {
+            color: #c0392b;
+            font-weight: 700;
+        }
+
+        /* ===== CTA (来看看我) ===== */
+        #cta {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+            animation: ctaPulse 1.5s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px 24px;
+        }
+        #cta button {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 14px 36px;
+            font-size: 28px;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+        #cta button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 32px rgba(76, 175, 80, 0.7);
+        }
+        #cta button:active {
+            transform: scale(0.95);
+        }
+        @keyframes ctaPulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.03);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 640px) {
+            .password-box {
+                padding: 32px 24px;
+            }
+            .win7-body {
+                padding: 28px 20px 28px;
+            }
+            .win7-body .error-icon {
+                width: 60px;
+                height: 60px;
+            }
+            .win7-body .error-icon::before,
+            .win7-body .error-icon::after {
+                width: 32px;
+                height: 5px;
+            }
+            .win7-body h3 {
+                font-size: 20px;
+            }
+            .envelope {
+                padding: 24px 20px 20px;
+            }
+            #letterContent .letter-title {
+                font-size: 24px;
+                letter-spacing: 8px;
+            }
+            #letterContent .letter-body {
+                font-size: 16px;
+            }
+            #letterContent .letter-signature {
+                font-size: 15px;
+            }
+            #animArea .teacher-name-big.moved {
+                font-size: 24px !important;
+            }
+            #cta {
+                font-size: 24px;
+            }
+            #cta button {
+                font-size: 20px;
+                padding: 10px 24px;
+            }
+        }
+        @media (max-width: 420px) {
+            .win7-body .btn-win7 {
+                padding: 8px 28px;
+                font-size: 13px;
+            }
+            .envelope {
+                padding: 18px 14px 16px;
+            }
+            #letterContent .letter-title {
+                font-size: 20px;
+                letter-spacing: 4px;
+            }
+            #letterContent .letter-body {
+                font-size: 14px;
+            }
+            #cta {
+                font-size: 20px;
+            }
+            #cta button {
+                font-size: 16px;
+                padding: 8px 18px;
+            }
+        }
+
+        /* ===== 辅助 ===== */
+        .hidden {
+            display: none !important;
+        }
+        .no-select {
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== Canvas 底层（烟花 + 粒子） ===== -->
+    <canvas id="fxCanvas"></canvas>
+
+    <!-- ===== 主应用容器 ===== -->
+    <div id="app">
+
+        <!-- ===== 密码弹窗 ===== -->
+        <div id="passwordModal">
+            <div class="password-box">
+                <span class="lock-icon">🔒</span>
+                <h2>访问受限</h2>
+                <p>请输入访问密码以查看内容</p>
+                <input type="password" id="pwdInput" placeholder="请输入密码" maxlength="20" autofocus>
+                <div class="error-msg" id="pwdError">密码错误，请重试</div>
+                <button class="btn-submit" id="pwdSubmit">确认访问</button>
+            </div>
+        </div>
+
+        <!-- ===== Win7 Aero 窗口 ===== -->
+        <div id="win7Window">
+            <div class="win7-titlebar">
+                <span class="win-icon">⏺</span>
+                <span class="win-title">骗你的</span>
+                <div class="win-controls">
+                    <span class="c-close"></span>
+                    <span class="c-min"></span>
+                    <span class="c-max"></span>
+                </div>
+            </div>
+            <div class="win7-body">
+                <div class="error-icon"></div>
+                <h3>拒绝访问</h3>
+                <p>您没有权限查看此内容。</p>
+                <button class="btn-win7" id="win7Btn">确定</button>
+            </div>
+        </div>
+
+        <!-- ===== 自定义 Alert ===== -->
+        <div id="customAlert">
+            <div class="alert-box">
+                <div class="alert-icon">😏</div>
+                <h3>骗你的</h3>
+                <button class="btn-alert" id="alertBtn">确定</button>
+            </div>
+        </div>
+
+        <!-- ===== 主内容区 ===== -->
+        <div id="mainContent">
+
+            <!-- 动画文字区 -->
+            <div id="animArea">
+                <span class="hello-text" id="helloText">你好</span>
+                <span class="teacher-name-big" id="teacherNameBig">黄少敏</span>
+            </div>
+
+            <!-- 信封 -->
+            <div id="envelopeWrap">
+                <div class="envelope">
+                    <div class="envelope-flap"></div>
+                    <div id="letterContent">
+                        <div class="letter-title">感谢信</div>
+                        <div class="letter-salute">
+                            黄少敏<span class="name-in-letter" id="nameInLetter"></span>：
+                        </div>
+                        <div class="letter-body" id="letterBody">
+                            <span id="typedText"></span><span class="cursor-blink" id="cursorBlink"></span>
+                        </div>
+                        <div class="letter-signature">
+                            —— 抖音-老六说电脑（<span class="highlight">廖瑾恒</span>）
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA 会由 JS 动态添加到此处 -->
+
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        //  1. 配置
+        // ============================================================
+        const TEACHER_NAME = '黄少敏';
+        const PASSWORD = 'hsm';
+
+        // 感谢信全文（逐字输出）
+        const LETTER_FULL = `感谢您三年来的辛勤付出与悉心教导。这三年的时光里，您不仅教会了我们知识，更教会了我们如何做人。您的每一次鼓励、每一句教诲，都将成为我们人生中最宝贵的财富。
+
+        希望您在下一届学生中，也能遇到像我们一样有趣的孩子，他们会带给您更多的欢笑与惊喜。
+
+        祝您天天开心，身体健康，工作顺心！
+
+        我们先溜了，但我们会永远记得您！`;
+
+        // ============================================================
+        //  2. DOM 引用
+        // ============================================================
+        const $ = id => document.getElementById(id);
+        const pwdModal = $('passwordModal');
+        const pwdInput = $('pwdInput');
+        const pwdSubmit = $('pwdSubmit');
+        const pwdError = $('pwdError');
+        const win7Window = $('win7Window');
+        const win7Btn = $('win7Btn');
+        const customAlert = $('customAlert');
+        const alertBtn = $('alertBtn');
+        const mainContent = $('mainContent');
+        const helloText = $('helloText');
+        const teacherNameBig = $('teacherNameBig');
+        const envelopeWrap = $('envelopeWrap');
+        const typedText = $('typedText');
+        const cursorBlink = $('cursorBlink');
+        const nameInLetter = $('nameInLetter');
+
+        // ============================================================
+        //  3. Canvas 烟花 + 粒子引擎
+        // ============================================================
+        const canvas = document.getElementById('fxCanvas');
+        const ctx = canvas.getContext('2d');
+        let W, H;
+
+        function resizeCanvas() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // ----- 烟花粒子 -----
+        class FireworkParticle {
+            constructor(x, y, color, vx, vy, life, size) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.vx = vx;
+                this.vy = vy;
+                this.life = life;
+                this.maxLife = life;
+                this.size = size || 3;
+                this.trail = [];
+                this.maxTrail = 6;
+            }
+            update() {
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > this.maxTrail) this.trail.shift();
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.04;
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+                this.life--;
+                this.size *= 0.995;
+            }
+            draw(ctx) {
+                const alpha = Math.max(0, this.life / this.maxLife);
+                // 拖尾
+                for (let i = 0; i < this.trail.length; i++) {
+                    const t = i / this.trail.length;
+                    ctx.beginPath();
+                    ctx.arc(this.trail[i].x, this.trail[i].y, this.size * t * 0.6, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color.replace('1)', alpha * t * 0.5 + ')');
+                    ctx.fill();
+                }
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, Math.max(0.5, this.size), 0, Math.PI * 2);
+                ctx.fillStyle = this.color.replace('1)', alpha + ')');
+                ctx.fill();
+                // 发光
+                if (this.size > 1) {
+                    ctx.shadowColor = this.color.replace('1)', alpha * 0.4 + ')');
+                    ctx.shadowBlur = 20;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color.replace('1)', alpha * 0.15 + ')');
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+            get dead() { return this.life <= 0 || this.size < 0.3; }
+        }
+
+        let fireworks = [];
+
+        function spawnFirework() {
+            const x = Math.random() * W * 0.6 + W * 0.2;
+            const y = Math.random() * H * 0.3 + H * 0.1;
+            const colors = [
+                'rgba(255,100,100,1)', 'rgba(100,255,100,1)', 'rgba(100,150,255,1)',
+                'rgba(255,200,50,1)', 'rgba(200,100,255,1)', 'rgba(50,255,220,1)',
+                'rgba(255,150,200,1)', 'rgba(150,255,200,1)', 'rgba(255,100,50,1)'
+            ];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const count = 60 + Math.floor(Math.random() * 50);
+            const angleSpread = Math.PI * 2;
+            const speed = 2 + Math.random() * 3;
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * angleSpread;
+                const sp = speed * (0.3 + Math.random() * 0.7);
+                const vx = Math.cos(angle) * sp;
+                const vy = Math.sin(angle) * sp - 0.5;
+                const life = 60 + Math.floor(Math.random() * 40);
+                const size = 2 + Math.random() * 3;
+                fireworks.push(new FireworkParticle(x, y, color, vx, vy, life, size));
+            }
+        }
+
+        let fireworkTimer = 0;
+        let fireworksActive = false;
+
+        function startFireworks() {
+            fireworksActive = true;
+            fireworkTimer = 0;
+            // 初始齐射
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => spawnFirework(), i * 120);
+            }
+        }
+
+        function stopFireworks() {
+            fireworksActive = false;
+        }
+
+        // ----- Google 粒子效果（点击爆炸） -----
+        let clickParticles = [];
+
+        function spawnClickParticles(x, y) {
+            const count = 28 + Math.floor(Math.random() * 20);
+            const colors = [
+                'rgba(66,133,244,1)', 'rgba(234,67,53,1)', 'rgba(251,188,5,1)',
+                'rgba(52,168,83,1)', 'rgba(255,138,101,1)', 'rgba(128,216,255,1)',
+                'rgba(255,213,79,1)', 'rgba(174,202,255,1)', 'rgba(255,138,101,1)'
+            ];
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 6;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const life = 30 + Math.floor(Math.random() * 30);
+                const size = 2 + Math.random() * 4;
+                const p = new FireworkParticle(
+                    x + (Math.random() - 0.5) * 6,
+                    y + (Math.random() - 0.5) * 6,
+                    color,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed - 0.5,
+                    life, size
+                );
+                p.maxTrail = 4;
+                clickParticles.push(p);
+            }
+        }
+
+        // ----- 动画循环 -----
+        function animateFX() {
+            ctx.clearRect(0, 0, W, H);
+
+            // 更新烟花
+            if (fireworksActive) {
+                fireworkTimer++;
+                if (fireworkTimer % 18 === 0) {
+                    spawnFirework();
+                    if (Math.random() < 0.3) setTimeout(spawnFirework, 60 + Math.random() * 100);
+                }
+                if (fireworkTimer % 40 === 0 && Math.random() < 0.4) {
+                    spawnFirework();
+                }
+            }
+
+            // 更新烟花粒子
+            for (let i = fireworks.length - 1; i >= 0; i--) {
+                fireworks[i].update();
+                if (fireworks[i].dead) {
+                    fireworks.splice(i, 1);
+                }
+            }
+
+            // 更新点击粒子
+            for (let i = clickParticles.length - 1; i >= 0; i--) {
+                clickParticles[i].update();
+                if (clickParticles[i].dead) {
+                    clickParticles.splice(i, 1);
+                }
+            }
+
+            // 绘制烟花
+            for (const p of fireworks) p.draw(ctx);
+            // 绘制点击粒子
+            for (const p of clickParticles) p.draw(ctx);
+
+            // 限制粒子数量
+            if (fireworks.length > 3000) fireworks.splice(0, fireworks.length - 3000);
+            if (clickParticles.length > 500) clickParticles.splice(0, clickParticles.length - 500);
+
+            requestAnimationFrame(animateFX);
+        }
+        animateFX();
+
+        // ============================================================
+        //  4. 键盘音效（Web Audio API）
+        // ============================================================
+        let audioCtx = null;
+
+        function getAudioCtx() {
+            if (!audioCtx) {
+                audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        function playKeyClick() {
+            try {
+                const ctx = getAudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 800 + Math.random() * 400;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.06, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.06);
+            } catch (_) { /* 静默降级 */ }
+        }
+
+        // ============================================================
+        //  5. 打字效果
+        // ============================================================
+        let typingTimer = null;
+        let typingIndex = 0;
+        let typingComplete = false;
+        let letterFullText = '';
+
+        function startTyping() {
+            letterFullText = LETTER_FULL;
+            typedText.textContent = '';
+            typingIndex = 0;
+            typingComplete = false;
+            cursorBlink.style.display = 'inline-block';
+
+            if (typingTimer) clearInterval(typingTimer);
+
+            const chars = [...letterFullText];
+
+            typingTimer = setInterval(() => {
+                if (typingIndex < chars.length) {
+                    const ch = chars[typingIndex];
+                    if (ch === '\n') {
+                        typedText.textContent += '\n';
+                    } else if (ch === ' ') {
+                        typedText.textContent += ' ';
+                    } else {
+                        typedText.textContent += ch;
+                    }
+                    typingIndex++;
+                    playKeyClick();
+                    const bodyEl = document.getElementById('letterBody');
+                    if (bodyEl) bodyEl.scrollTop = bodyEl.scrollHeight;
+                } else {
+                    // 打字完成
+                    clearInterval(typingTimer);
+                    typingTimer = null;
+                    typingComplete = true;
+                    cursorBlink.style.display = 'none';
+                    // 显示 CTA 按钮
+                    showCallToAction();
+                }
+            }, 70 + Math.random() * 30);
+        }
+
+        // ============================================================
+        //  6. 显示“来看看我” CTA
+        // ============================================================
+        function showCallToAction() {
+            // 避免重复添加
+            if (document.getElementById('cta')) return;
+            const cta = document.createElement('div');
+            cta.id = 'cta';
+            cta.innerHTML = `
+                <span>来看看我</span>
+                <button id="ctaBtn">好的</button>
+            `;
+            document.getElementById('mainContent').appendChild(cta);
+
+            // 按钮点击事件
+            document.getElementById('ctaBtn').addEventListener('click', function(e) {
+                // 粒子效果
+                spawnClickParticles(e.clientX, e.clientY);
+                // 跳转
+                window.location.href = 'https://douyin-lao6pc.github.io/';
+            });
+        }
+
+        // ============================================================
+        //  7. 主流程控制
+        // ============================================================
+
+        // 7.1 密码验证
+        function handlePassword() {
+            const val = pwdInput.value.trim();
+            if (val === PASSWORD) {
+                pwdError.classList.remove('show');
+                pwdModal.classList.add('hidden');
+                setTimeout(() => {
+                    win7Window.classList.add('show');
+                }, 400);
+            } else {
+                pwdError.classList.add('show');
+                pwdInput.value = '';
+                pwdInput.focus();
+                const rect = pwdInput.getBoundingClientRect();
+                spawnClickParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            }
+        }
+
+        pwdSubmit.addEventListener('click', handlePassword);
+        pwdInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') handlePassword();
+        });
+
+        // 7.2 Win7 窗口 - 确定按钮
+        win7Btn.addEventListener('click', function() {
+            const rect = this.getBoundingClientRect();
+            spawnClickParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            customAlert.classList.add('show');
+        });
+
+        // 7.3 自定义 Alert - 确定按钮
+        alertBtn.addEventListener('click', function() {
+            const rect = this.getBoundingClientRect();
+            spawnClickParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+            customAlert.classList.remove('show');
+            win7Window.classList.remove('show');
+
+            setTimeout(() => {
+                mainContent.classList.add('show');
+                startMainAnimation();
+            }, 300);
+        });
+
+        // 7.4 主动画
+        function startMainAnimation() {
+            nameInLetter.textContent = TEACHER_NAME;
+
+            let size = 0;
+            const targetSize = Math.min(window.innerWidth * 0.12, 120);
+            const step = targetSize / 35;
+
+            startFireworks();
+
+            function growText() {
+                if (size < targetSize) {
+                    size += step;
+                    if (size > targetSize) size = targetSize;
+                    helloText.style.fontSize = size + 'px';
+                    teacherNameBig.style.fontSize = size + 'px';
+                    const glow = size / targetSize * 40 + 20;
+                    helloText.style.textShadow = `0 0 ${glow}px rgba(74,124,247,0.3), 0 0 ${glow*2}px rgba(108,92,231,0.15)`;
+                    teacherNameBig.style.textShadow = `0 0 ${glow}px rgba(74,124,247,0.3), 0 0 ${glow*2}px rgba(108,92,231,0.15)`;
+                    requestAnimationFrame(growText);
+                } else {
+                    setTimeout(() => {
+                        helloText.classList.add('fade-out');
+
+                        setTimeout(() => {
+                            const nameInLetterEl = document.getElementById('nameInLetter');
+                            const letterRect = nameInLetterEl.getBoundingClientRect();
+                            const animRect = teacherNameBig.getBoundingClientRect();
+
+                            const dx = letterRect.left - animRect.left + (letterRect.width - animRect
+                            .width) / 2;
+                            const dy = letterRect.top - animRect.top;
+
+                            teacherNameBig.style.transform =
+                                `translate(${dx}px, ${dy}px) scale(0.5)`;
+                            teacherNameBig.style.fontSize = '32px';
+                            teacherNameBig.style.color = '#c0392b';
+                            teacherNameBig.style.textShadow = '0 0 30px rgba(192,57,43,0.2)';
+                            helloText.style.display = 'none';
+
+                            setTimeout(() => {
+                                envelopeWrap.classList.add('show');
+                                setTimeout(() => {
+                                    startTyping();
+                                }, 400);
+                            }, 800);
+
+                        }, 400);
+
+                    }, 1500);
+                }
+            }
+
+            growText();
+        }
+
+        // ============================================================
+        //  8. 全局点击 → Google 粒子效果
+        // ============================================================
+        document.addEventListener('click', function(e) {
+            const tag = e.target.tagName.toLowerCase();
+            if (tag === 'input' || tag === 'button') return;
+            spawnClickParticles(e.clientX, e.clientY);
+        });
+
+        // ============================================================
+        //  9. 窗口 resize 适配
+        // ============================================================
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+        });
+
+        // ============================================================
+        //  10. 页面初始化
+        // ============================================================
+        setTimeout(() => pwdInput.focus(), 300);
+
+        document.addEventListener('keydown', e => {
+            if (e.key === ' ' && e.target === document.body) e.preventDefault();
+        });
+
+        console.log('💌 感谢信已加载 — 献给黄少敏老师');
+        console.log('🔐 密码提示: hsm');
+    </script>
+
+</body>
+</html>
